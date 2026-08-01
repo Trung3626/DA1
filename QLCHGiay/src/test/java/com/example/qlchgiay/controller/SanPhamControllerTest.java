@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -145,7 +146,7 @@ class SanPhamControllerTest {
 
     @Test
     void createRequiresAllVariantComponents() {
-        assertThrows(
+        IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> controller.create(
                         session,
@@ -163,5 +164,78 @@ class SanPhamControllerTest {
                         new RedirectAttributesModelMap()
                 )
         );
+
+        assertEquals(
+                "Vui lòng chọn hoặc thêm loại sản phẩm.",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void createRejectsPriceBelowOneMillion() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> controller.create(
+                        session,
+                        "Giày giá thấp",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        BigDecimal.valueOf(999_999),
+                        1,
+                        new RedirectAttributesModelMap()
+                )
+        );
+
+        assertEquals("Giá bán phải từ 1.000.000 VNĐ trở lên.", exception.getMessage());
+        verify(sanPhamRepo, never()).save(any());
+    }
+
+    @Test
+    void createRejectsZeroStock() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> controller.create(
+                        session,
+                        "Giày hết tồn",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        BigDecimal.valueOf(1_000_000),
+                        0,
+                        new RedirectAttributesModelMap()
+                )
+        );
+
+        assertEquals("Số lượng tồn phải lớn hơn 0.", exception.getMessage());
+        verify(sanPhamRepo, never()).save(any());
+    }
+
+    @Test
+    void employeeCannotDeleteProduct() {
+        TaiKhoan employee = new TaiKhoan();
+        employee.setVaiTro("Nhân viên");
+        when(session.getAttribute("user")).thenReturn(employee);
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+
+        String view = controller.delete(7, session, redirect);
+
+        assertEquals("redirect:/sanpham", view);
+        assertEquals(
+                "Tài khoản nhân viên không có quyền xóa sản phẩm.",
+                redirect.getFlashAttributes().get("error")
+        );
+        verify(sanPhamRepo, never()).existsById(7);
+        verify(sanPhamRepo, never()).deleteById(7);
     }
 }

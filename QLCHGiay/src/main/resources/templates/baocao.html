@@ -464,14 +464,6 @@
             background: linear-gradient(90deg, #ff4f22, #ff9700);
         }
 
-        .comparison-axis {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            color: #716c67;
-            font-size: 9px;
-        }
-
         .comparison-empty {
             padding: 24px 18px;
             border: 1px dashed #3a3531;
@@ -657,13 +649,19 @@
                 <i class="fa-solid fa-robot"></i>
                 <span>Chatbot hỗ trợ</span>
             </a>
+            <a th:href="@{/caidat}">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Cài đặt</span>
+            </a>
         </nav>
 
         <div class="logout">
-            <a th:href="@{/logout}">
+            <form class="logout-form" method="post" th:action="@{/logout}">
+                <button class="logout-button" type="submit">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Đăng xuất</span>
-            </a>
+                </button>
+            </form>
         </div>
 
     </aside>
@@ -861,11 +859,6 @@
                                  th:attr="aria-valuenow=${x.relative},
                                           aria-label=${x.name + ': ' + x.relative + '% so với sản phẩm dẫn đầu'}">
                                 <div class="comparison-fill" th:style="${'width:' + x.relative + '%'}"></div>
-                            </div>
-                            <div class="comparison-axis" aria-hidden="true">
-                                <span>0</span>
-                                <span>50%</span>
-                                <span>100% dẫn đầu</span>
                             </div>
                         </div>
                     </div>

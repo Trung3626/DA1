@@ -280,6 +280,25 @@
             color: #ff6a1a;
         }
 
+        .panel-heading {
+            display: grid;
+            gap: 6px;
+        }
+
+        .priority-note {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: inherit;
+            opacity: 0.76;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .priority-note i {
+            color: #ff6a1a;
+        }
+
         .toolbar {
             display: flex;
             align-items: center;
@@ -754,13 +773,19 @@
                 <i class="fa-solid fa-robot"></i>
                 <span>Chatbot hỗ trợ</span>
             </a>
+            <a th:href="@{/caidat}">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Cài đặt</span>
+            </a>
         </nav>
 
         <div class="logout">
-            <a th:href="@{/logout}">
+            <form class="logout-form" method="post" th:action="@{/logout}">
+                <button class="logout-button" type="submit">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Đăng xuất</span>
-            </a>
+                </button>
+            </form>
         </div>
 
     </aside>
@@ -872,14 +897,22 @@
 
             </div>
 
-            <section class="panel">
+            <section class="panel" aria-labelledby="productListTitle">
 
                 <div class="panel-header">
 
-                    <h2 class="panel-title">
-                        <i class="fa-solid fa-list"></i>
-                        Danh sách sản phẩm
-                    </h2>
+                    <div class="panel-heading">
+                        <h2 class="panel-title" id="productListTitle">
+                            <i class="fa-solid fa-list" aria-hidden="true"></i>
+                            Danh sách sản phẩm
+                        </h2>
+                        <p class="priority-note" id="productOrderNote">
+                            <i class="fa-solid fa-ranking-star" aria-hidden="true"></i>
+                            <span th:text="${productOrderLabel}">
+                                Sắp xếp mặc định theo vai trò.
+                            </span>
+                        </p>
+                    </div>
 
                     <div class="toolbar">
 
@@ -901,15 +934,10 @@
                         </button>
 
                         <div class="price-sort" role="group" aria-label="Sắp xếp theo giá">
-                            <button class="sort-btn" id="sortPriceAsc" type="button"
-                                    aria-pressed="false" onclick="togglePriceSort('asc')">
-                                <i class="fa-solid fa-arrow-up-short-wide"></i>
-                                <span>Giá thấp → cao</span>
-                            </button>
-                            <button class="sort-btn" id="sortPriceDesc" type="button"
-                                    aria-pressed="false" onclick="togglePriceSort('desc')">
-                                <i class="fa-solid fa-arrow-down-wide-short"></i>
-                                <span>Giá cao → thấp</span>
+                            <button class="sort-btn" id="sortPrice" type="button"
+                                    aria-pressed="false" onclick="togglePriceSort()">
+                                <i id="sortPriceIcon" class="fa-solid fa-arrow-up-arrow-down"></i>
+                                <span id="sortPriceLabel">Sắp xếp theo giá</span>
                             </button>
                         </div>
 
@@ -948,7 +976,7 @@
 
                 <div class="table-wrapper">
 
-                    <table id="productTable">
+                    <table id="productTable" aria-describedby="productOrderNote">
 
                         <thead>
                         <tr>
@@ -1073,7 +1101,8 @@
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
 
-                                    <form method="post" th:action="@{/sanpham/xoa/{id}(id=${x.id})}"
+                                    <form th:if="${isAdmin}"
+                                          method="post" th:action="@{/sanpham/xoa/{id}(id=${x.id})}"
                                           onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
                                         <button class="action-btn delete-btn" type="submit" title="Xóa">
                                             <i class="fa-solid fa-trash"></i>
@@ -1185,12 +1214,22 @@
 
     function setPriceSort(direction) {
         currentPriceSort = direction;
-        const ascButton = document.getElementById("sortPriceAsc");
-        const descButton = document.getElementById("sortPriceDesc");
-        ascButton.classList.toggle("active", direction === "asc");
-        descButton.classList.toggle("active", direction === "desc");
-        ascButton.setAttribute("aria-pressed", String(direction === "asc"));
-        descButton.setAttribute("aria-pressed", String(direction === "desc"));
+        const button = document.getElementById("sortPrice");
+        const icon = document.getElementById("sortPriceIcon");
+        const label = document.getElementById("sortPriceLabel");
+        button.classList.toggle("active", direction !== null);
+        button.setAttribute("aria-pressed", String(direction !== null));
+
+        if (direction === "asc") {
+            icon.className = "fa-solid fa-arrow-up-short-wide";
+            label.textContent = "Giá thấp → cao";
+        } else if (direction === "desc") {
+            icon.className = "fa-solid fa-arrow-down-wide-short";
+            label.textContent = "Giá cao → thấp";
+        } else {
+            icon.className = "fa-solid fa-arrow-up-arrow-down";
+            label.textContent = "Sắp xếp theo giá";
+        }
 
         const comparator = direction
             ? (left, right) => {
@@ -1201,8 +1240,8 @@
         productPagination?.setSort(comparator);
     }
 
-    function togglePriceSort(direction) {
-        setPriceSort(currentPriceSort === direction ? null : direction);
+    function togglePriceSort() {
+        setPriceSort(currentPriceSort === "asc" ? "desc" : "asc");
         filterProducts();
     }
 
